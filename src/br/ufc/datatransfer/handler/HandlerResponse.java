@@ -1,14 +1,7 @@
 package br.ufc.datatransfer.handler;
 
-import java.io.InputStream;
-
-import org.apache.http.HttpResponse;
-
 import br.ufc.datatransfer.DataTransferResponse;
 import br.ufc.datatransfer.exception.DataTransferResponseException;
-import br.ufc.datatransfer.util.DataTransferUtils;
-
-import com.google.gson.Gson;
 
 /**
  * Implementação de {@link IHandlerResponse}
@@ -30,49 +23,9 @@ public abstract class HandlerResponse<T> implements IHandlerResponse<T>{
 	public static final int STATUS_CODE_EXCEPTION = -1;
 
 	/**
-	 * Tipo de dados a ser manipulado pelo GSON, como valor único a ser transformado
-	 */
-	protected Class<T> mDataType;
-	
-	/**
-	 * Tipo de dados a ser manipulador, sendo retornado um vetor desses dados pelo GSON
-	 */
-	protected Class<T[]> mDataTypeVector;
-
-	/**
 	 * Chamado como callback para manipular a resposta do servidor
 	 */
-	public DataTransferResponse<T> handlingResponse(HttpResponse httpResponse) throws DataTransferResponseException{
-
-		try {
-
-			
-			
-			int statusCode = httpResponse.getStatusLine().getStatusCode();
-			InputStream contentResponse = httpResponse.getEntity().getContent();
-			String jsonContent = DataTransferUtils.toJSONString(contentResponse);
-			
-			Gson gson = DataTransferUtils.getGsonInstance();
-			
-			
-			if(mDataType != null){
-				T result = gson.fromJson(jsonContent, mDataType);
-				return new DataTransferResponse<T>(statusCode, result);
-			}else{
-				T[] result = gson.fromJson(jsonContent, mDataTypeVector);
-				return new DataTransferResponse<T>(statusCode, result);
-			}
-			
-			
-		} catch (Exception e) {
-			
-			DataTransferResponseException dataTransferException = new DataTransferResponseException(e.getMessage());
-			dataTransferException.setStackTrace(e.getStackTrace());
-			
-			throw dataTransferException;	
-		}
-
-	}
-
+	public abstract DataTransferResponse<T> handlingResponse(DataTransferResponse<T> response);
+	
 
 }

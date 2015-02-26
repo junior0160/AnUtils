@@ -1,162 +1,81 @@
 package br.ufc.datatransfer;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
-
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-
-import android.location.Address;
+import android.os.AsyncTask;
 import android.util.Log;
-import br.ufc.datatransfer.config.AppConfig;
+import br.ufc.datatransfer.clientrequest.IClientRequest;
+import br.ufc.datatransfer.handler.HandlerResponse;
 import br.ufc.datatransfer.handler.IHandlerResponse;
-import br.ufc.datatransfer.handler.StringHandlerResponse;
-import br.ufc.datatransfer.util.URLConfig;
 
 /**
- * Núcleo de transferência de dados da aplicação para o servidor
- * @author Holanda Junior
+ * AsyncTask responsável por enviar os dados para o servidor
+ * @author holanda
  *
- * @param <T> Modelo criado {@link Collector}, {@link Address}, etc.
+ * @param <T>
  */
-public class DataTransfer<T> implements IDataTransfer<T> {
+public class DataTransfer<T> extends
+		AsyncTask<Void, Void, DataTransferResponse<T>> implements IDataTransfer<T>{
 
-	private final static String TAG = "DataTransfer";
+	private final static String TAG = "SendDataTask";
+	
+	private static final String MESSAGE_EXCEPTION = "Ocorreu um erro na transferência dos dados. Por favor, verifique sua conexão de internet ou contacte o suporte.";
 	
 	/**
-	 * AsyncTask para envio dos dados
+	 * Handler para manipular os dados recebidos do servidor. Extensão de {@link HandlerResponse}		
 	 */
-	private SendDataTask<T> mSendDataTask;
+	private IHandlerResponse<T> mHandlerResponse;
 	
 	/**
-	 * Callback para manipulação da resposta do servidor
+	 * Implementação de {@link DataTransferCallback} para recebimento dos dados tratados
 	 */
 	private DataTransferCallback<T> mCallback;
+		
+	private IClientRequest<T> mRequest;
+	
+	public DataTransfer(IClientRequest<T> request, DataTransferCallback<T> callback, IHandlerResponse<T> handlerResponse) {
+		mRequest = request;
+		mCallback = callback;
+		mHandlerResponse = handlerResponse;
+	}
+	
+	/**
+	 * @param mHandlerResponse the mHandlerResponse to set
+	 */
+	public void setmHandlerResponse(IHandlerResponse<T> mHandlerResponse) {
+		this.mHandlerResponse = mHandlerResponse;
+	}
 	
 	
 	/**
-	 * 		
-	 * @param callback {@link DataTransferCallback}
+	 * @param callback
+	 *            the callback to set
 	 */
-	public DataTransfer(DataTransferCallback<T> callback) {
-		mSendDataTask = new SendDataTask<T>();
+	public void setCallback(DataTransferCallback<T> callback) {
 		mCallback = callback;
 	}
+	
+	
+	@Override
+	protected void onPreExecute() {
 
-	/**
-	 * Cria {@link HttpPost} para ser enviado
-	 * @param url URL do servidor
-	 * @param jsonContent Dados a serem enviados em formato JSON
-	 * @return {@link HttpPost} construido
-	 */
-	private HttpPost createPost(String url, String jsonContent) {
-
-		HttpPost post = new HttpPost(url);
-
-		try {
-			post.setEntity(new StringEntity(jsonContent, "UTF-8"));
-			post.setHeader("Accept", "application/json");
-			post.setHeader("Content-type", "application/json");
-
+		super.onPreExecute();
 			
-
-			return post;
-
-		
-		} catch (UnsupportedEncodingException e) {
-			
-			e.printStackTrace();
-		}
-		
-		return null;
 	}
 
-	/**
-	 * Cria {@link HttpPost} para ser enviado
-	 * @param url URL do servidor
-	 * @param contentEntity Dados a serem enviados e construidos conforme {@link MultipartEntityBuilder}
-	 * @return {@link HttpPost} construido
-	 */
-	private HttpPost createPost(String url, MultipartEntityBuilder contentEntity) {
+	@Override
+	protected DataTransferResponse<T> doInBackground(Void... params){
 
-		HttpPost post = new HttpPost(url);
-		post.setEntity(contentEntity.build());
-		post.addHeader("token", AppConfig.SERVER_TOKEN);
+		Log.e("Request", "Datatransfer DoInBackground");
+		DataTransferResponse<T> response = mRequest.doConnection();
 		
+		return mHandlerResponse.handlingResponse(response);
 		
-		
-		return post;
-
 	}
 
-	/**
-	 * 
-	 * @param url
-	 * 		  Url de requisição	
-	 * @param data
-	 * 		  Key: representa o parametro a ser passado pelo Post
-	 * 		  Caso deseje enviar json, use a key "json"	
-	 * 		  Value: representa o dado em si que será enviado	
-	 * @param handlerResponse
-	 * 		  Callback de retorno para a resposta do servidor 	
-	 */
-	public void sendDataPost(Map<String, Object> data) {
-
-		HttpPost post;
-		
-				
-		if (data.containsKey("json"))
-			post = createPost(URLConfig.URL_ADD_DATA, (String) data.get("json"));
-		else {
-			MultipartEntityBuilder entity = MultipartEntityBuilder.create();
-
-			for (Map.Entry<String, Object> dataMap : data.entrySet()) {
-
-				ContentBody body = null;
-				Object value = dataMap.getValue();
-				
-
-				if (value instanceof File)
-					body = new FileBody((File) value, ContentType.MULTIPART_FORM_DATA);
-				else if (value instanceof String)
-					body = new StringBody((String) value,ContentType.DEFAULT_TEXT);
-				
-				entity.addPart(dataMap.getKey(), body);
-			}
-
-			post = createPost(URLConfig.URL_ADD_DATA, entity);
-
-		}
-		Log.e(TAG, "DataTransfer");
-		mSendDataTask.setCallback(mCallback);
-		mSendDataTask.setmHandlerResponse((IHandlerResponse<T>) new StringHandlerResponse());
-		mSendDataTask.execute(post);
-
+	protected void onPostExecute(DataTransferResponse<T> result) {
+		mCallback.onReceiveResponse(result);
 	}
 	
-	public void sendDataGet(Map<String, Object> data){
-		String url = URLConfig.URL_ADD_DATA;
-		url += "?";
-						
-		for(Map.Entry<String, Object> values : data.entrySet())
-			url += values.getKey() + "=" + values.getValue() + "&";
-		
-		url = url.substring(0, url.length()-1);
-		
-		Log.e("GET URL", url);
-		
-		HttpGet get = new HttpGet(url);
-		
-		mSendDataTask.setCallback(mCallback);
-		mSendDataTask.setmHandlerResponse((IHandlerResponse<T>) new StringHandlerResponse());
-		mSendDataTask.execute(get);
+	public void execute() {
+		super.execute();
 	}
-
 }

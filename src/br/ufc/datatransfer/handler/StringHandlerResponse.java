@@ -1,5 +1,7 @@
 package br.ufc.datatransfer.handler;
 
+import br.ufc.datatransfer.DataTransferResponse;
+
 
 /**
  * Implementação de {@link IHandlerResponse} para tipo String
@@ -8,9 +10,14 @@ package br.ufc.datatransfer.handler;
  */
 public class StringHandlerResponse extends HandlerResponse<String> implements IHandlerResponse<String>{
 
-	public StringHandlerResponse() {
-		this.mDataType = String.class;
+	@Override
+	public DataTransferResponse<String> handlingResponse(
+			DataTransferResponse<String> response) {
+
+		return response;
 	}
+
+	
 	
 	
 }

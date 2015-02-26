@@ -9,7 +9,6 @@ import br.ufc.datatransfer.exception.DataTransferException;
  * para serem utilizados.
  * @author Holanda Junior
  *
- * @param <T> Modelos criados etc.
  */
 public class DataTransferResponse<T> {
 
@@ -21,19 +20,10 @@ public class DataTransferResponse<T> {
 	/**
 	 * Dado recebidos pelo servidor
 	 */
-	private T mValue;
+	private T mValue;	
 	
-	/**
-	 * Dados recebidos pelo servidor como vetor
-	 */
-	private T[] mValueVector;
-	
-	
-	/**
-	 * Representa a exceção ocorrida, caso algo tenha acontecido
-	 */
-	private DataTransferException mTransferException;
-		
+	public DataTransferResponse() {
+	}
 	
 	public DataTransferResponse(int statusCode){
 		mStatusCode = statusCode;
@@ -43,11 +33,6 @@ public class DataTransferResponse<T> {
 		this(statusCode);
 		mValue = value;
 	
-	}
-	
-	public DataTransferResponse(int statusCode, T[] value) {
-		this(statusCode);
-		mValueVector = value;
 	}
 
 	/**
@@ -64,33 +49,16 @@ public class DataTransferResponse<T> {
 		return mValue;
 	}
 
-	/**
-	 * @return the mValueVector
-	 */
-	public T[] getmValueVector() {
-		return mValueVector;
+	public void setmStatusCode(int mStatusCode) {
+		this.mStatusCode = mStatusCode;
 	}
 
-	/**
-	 * @param mValueVector the mValueVector to set
-	 */
-	public void setmValueVector(T[] mValueVector) {
-		this.mValueVector = mValueVector;
+	public void setmValue(T mValue) {
+		this.mValue = mValue;
 	}
 
-	/**
-	 * @return the transferException
-	 */
-	public DataTransferException getmTransferException() {
-		return mTransferException;
-	}
 
-	/**
-	 * @param transferException the transferException to set
-	 */
-	public void setmTransferException(DataTransferException transferException) {
-		this.mTransferException = transferException;
-	}
+
 
 	
 	
