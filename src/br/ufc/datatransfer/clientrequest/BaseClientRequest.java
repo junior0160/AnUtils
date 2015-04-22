@@ -9,29 +9,54 @@ import java.net.URLEncoder;
 import java.util.List;
 
 import org.apache.http.NameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import br.ufc.datatransfer.clientrequest.RequestParams.REQUEST_METHOD;
 
 
 public abstract class BaseClientRequest<T, K> implements IClientRequest<K>{
 
+	
+	protected static String COOKIES_HEADER = "Set-Cookie";
 	protected final static String CHARSET = "UTF-8";
 	
 	protected String url;
 	protected List<NameValuePair> params;
 	protected T connection;
 	
+	protected int readTimeout;
+	protected int connectTimeout;
+	protected REQUEST_METHOD requestMethod;
+	protected boolean sendDataAsJson;
 	
-	public BaseClientRequest(String url, List<NameValuePair> params) {
+	public BaseClientRequest(String url, List<NameValuePair> params, RequestParams requestParams) {
 		this.url = url;
 		this.params = params;
+		this.readTimeout = requestParams.readTimeout;
+		this.connectTimeout = requestParams.connectTimeout;
+		this.requestMethod = requestParams.requestMethod;
+		this.sendDataAsJson = requestParams.sendDataAsJson;
+
+	
 	}
 	
 	
 	
-	protected String getRequestQuery() throws UnsupportedEncodingException
+	protected String getRequestQuery() throws JSONException, UnsupportedEncodingException
 	{
-	    StringBuilder result = new StringBuilder();
+		
+		if(sendDataAsJson)
+			return getJson();
+		else
+			return getURLEncoded();
+	}
+	
+	private String getURLEncoded() throws UnsupportedEncodingException{
+		
+		StringBuilder result = new StringBuilder();
 	    boolean first = true;
-
+	    
 	    for (NameValuePair pair : params)
 	    {
 	        if (first)
@@ -45,6 +70,20 @@ public abstract class BaseClientRequest<T, K> implements IClientRequest<K>{
 	    }
 	    
 	    return result.toString();
+	}
+	
+	private String getJson() throws JSONException{
+
+		JSONObject content = new JSONObject();
+		
+	    for (NameValuePair pair : params)
+	    {
+	    	content.put(pair.getName(), pair.getValue());
+	
+	    }
+	    
+	    return content.toString();
+		
 	}
 	
 	protected static String readStream(InputStream in) {
@@ -68,6 +107,8 @@ public abstract class BaseClientRequest<T, K> implements IClientRequest<K>{
 			}
 		}
 		return response.toString();
-	} 
+	}
+
+
 	
 }

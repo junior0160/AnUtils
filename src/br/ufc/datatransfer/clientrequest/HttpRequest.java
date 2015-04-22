@@ -11,15 +11,15 @@ import java.util.List;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.NameValuePair;
+import org.json.JSONException;
 
 import android.util.Log;
 import br.ufc.datatransfer.DataTransferResponse;
-import br.ufc.datatransfer.config.AppConfig;
 
 public class HttpRequest extends BaseClientRequest<HttpURLConnection, String>{
 	
-	public HttpRequest(String url, List<NameValuePair> params) {
-		super(url, params);
+	public HttpRequest(String url, List<NameValuePair> params, RequestParams requestParams) {
+		super(url, params, requestParams);
 	}
 
 	@Override
@@ -35,11 +35,12 @@ public class HttpRequest extends BaseClientRequest<HttpURLConnection, String>{
 			URL urlConnection = new URL("http://"+url);
 
 			connection = (HttpURLConnection) urlConnection.openConnection();
-			connection.setReadTimeout(10000);
-			connection.setConnectTimeout(15000);
-			connection.setRequestMethod("POST");
+			connection.setReadTimeout(readTimeout);
+			connection.setConnectTimeout(connectTimeout);
+			connection.setRequestMethod(requestMethod.getMethod());
 			connection.setDoInput(true);
-			connection.setRequestProperty("token", AppConfig.SERVER_TOKEN);
+			connection.setRequestProperty("Content-Type","application/json"); 
+			
 			
 			if (params != null) {
 			
@@ -62,31 +63,38 @@ public class HttpRequest extends BaseClientRequest<HttpURLConnection, String>{
 			
 			
 			int responseCode = connection.getResponseCode();
-			response.setmStatusCode(responseCode);
+			response.mStatusCode = responseCode;
 			
 			String responseString;
 			
 			if(responseCode >= 400)
 				responseString = readStream(connection.getErrorStream());
-			else
+			else{
 				responseString = readStream(connection.getInputStream());
 			
-			response.setmValue(responseString);
+				
+			}
 			
-			
+			response.mValue = responseString;
 			
 		} catch (UnsupportedEncodingException e) {
 		
 			Log.e("Request", "UnsuportedException");
 			Log.e("Request", ExceptionUtils.getStackTrace(e));
-			response.setmValue("None");
+			response.mValue = "None";
 			
 		} catch (IOException e) {
 			
 			Log.e("Request", "IOException");
 			Log.e("Request", ExceptionUtils.getStackTrace(e));
-			response.setmValue("None");
-
+			response.mValue = "None";
+			
+		} catch(JSONException e){
+		
+			Log.e("Request", "IOException");
+			Log.e("Request", ExceptionUtils.getStackTrace(e));
+			response.mValue = "None";
+			
 		}finally{
 			
 			connection.disconnect();

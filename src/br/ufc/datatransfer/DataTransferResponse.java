@@ -1,6 +1,7 @@
 package br.ufc.datatransfer;
 
-import br.ufc.datatransfer.exception.DataTransferException;
+import java.util.List;
+import java.util.Map;
 
 
 
@@ -15,12 +16,13 @@ public class DataTransferResponse<T> {
 	/**
 	 * Código de status do retorno do servidor
 	 */
-	private int mStatusCode;
+	public int mStatusCode;
 	
 	/**
 	 * Dado recebidos pelo servidor
 	 */
-	private T mValue;	
+	public T mValue;	
+	
 	
 	public DataTransferResponse() {
 	}
@@ -35,28 +37,14 @@ public class DataTransferResponse<T> {
 	
 	}
 
-	/**
-	 * @return the mStatusCode
-	 */
-	public int getmStatusCode() {
-		return mStatusCode;
+	public DataTransferResponse(int mStatusCode, T mValue,
+			Map<String, List<String>> mHeadersFields) {
+		this(mStatusCode, mValue);
 	}
+	
+	
 
-	/**
-	 * @return the mValue
-	 */
-	public T getmValue() {
-		return mValue;
-	}
-
-	public void setmStatusCode(int mStatusCode) {
-		this.mStatusCode = mStatusCode;
-	}
-
-	public void setmValue(T mValue) {
-		this.mValue = mValue;
-	}
-
+	
 
 
 

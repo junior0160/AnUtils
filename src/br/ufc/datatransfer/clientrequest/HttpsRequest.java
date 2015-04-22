@@ -23,8 +23,8 @@ public class HttpsRequest extends BaseClientRequest<HttpsURLConnection, String> 
 
 	private Context context;
 	
-	public HttpsRequest(Context context, String url, List<NameValuePair> params) {
-		super(url, params);
+	public HttpsRequest(Context context, String url, List<NameValuePair> params, RequestParams requestParams) {
+		super(url, params, requestParams);
 		this.context = context;
 	}
 
@@ -44,11 +44,10 @@ public class HttpsRequest extends BaseClientRequest<HttpsURLConnection, String> 
 			
 			connection = (HttpsURLConnection) urlConnection.openConnection();
 			connection.setSSLSocketFactory(sslFactory.makeSSLContext().getSocketFactory());
-			connection.setReadTimeout(10000);
-			connection.setConnectTimeout(15000);
-			connection.setRequestMethod("POST");
+			connection.setReadTimeout(readTimeout);
+			connection.setConnectTimeout(connectTimeout);
+			connection.setRequestMethod(requestMethod.getMethod());
 			connection.setDoInput(true);
-			connection.setRequestProperty("token", AppConfig.SERVER_TOKEN);
 			
 			if (params != null) {
 			
@@ -71,7 +70,7 @@ public class HttpsRequest extends BaseClientRequest<HttpsURLConnection, String> 
 			
 			
 			int responseCode = connection.getResponseCode();
-			response.setmStatusCode(responseCode);
+			response.mStatusCode = responseCode;
 			
 			String responseString;
 			
@@ -80,7 +79,7 @@ public class HttpsRequest extends BaseClientRequest<HttpsURLConnection, String> 
 			else
 				responseString = readStream(connection.getInputStream());
 			
-			response.setmValue(responseString);
+			response.mValue = responseString;
 			
 			
 			
@@ -88,19 +87,19 @@ public class HttpsRequest extends BaseClientRequest<HttpsURLConnection, String> 
 		
 			Log.e("Request", "UnsuportedException");
 			Log.e("Request", ExceptionUtils.getStackTrace(e));
-			response.setmValue("None");
+			response.mValue = "None";
 			
 		} catch (IOException e) {
 			
 			Log.e("Request", "IOException");
 			Log.e("Request", ExceptionUtils.getStackTrace(e));
-			response.setmValue("None");
-
+			response.mValue = "None";
+			
 		} catch (Exception e) {
 			
 			Log.e("Request", "Exception");
 			Log.e("Request", ExceptionUtils.getStackTrace(e));
-			response.setmValue("None");
+			response.mValue = "None";
 			
 		}finally{
 			
